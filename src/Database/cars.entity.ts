@@ -1,5 +1,5 @@
 import { IsInt, Matches, Min } from 'class-validator';
-import { CarsBrands, Jobs } from 'src/utils';
+import { CarsBrands } from 'src/utils';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -11,6 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Client } from './clients.entity';
+import { JobsDto } from 'src/Modules/cars/dto/jobs.dto';
 
 @Entity({ name: 'car', schema: 'public' })
 export class Car {
@@ -38,7 +39,7 @@ export class Car {
   @BeforeUpdate()
   normalizeModel() {
     if (this.model) {
-      this.model = this.model.toUpperCase().replace(/\s+/g, '');
+      this.model = this.model.toUpperCase().trim();
     }
   }
 
@@ -48,8 +49,8 @@ export class Car {
   @Column('integer', { nullable: false })
   year: number;
 
-  @Column('jsonb', { nullable: false })
-  jobs: Jobs[];
+  @Column('jsonb', { nullable: true })
+  jobs: JobsDto[];
 
   @IsInt({ message: 'Los kilómetros deben ser un número entero' })
   @Min(0, { message: 'Los kilómetros no pueden ser negativos' })

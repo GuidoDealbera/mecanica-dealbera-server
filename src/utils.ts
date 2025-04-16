@@ -52,12 +52,22 @@ export enum CarsBrands {
   Kamaz = 'Kamaz',
 }
 
-export interface Jobs {}
-
-export interface Clients {
-    fullname: string;
-    phone: string;
-    address: string;
-    city: string
-    email?: string
-}
+export const example = {
+  id: "f33fdc9a-40cf-4a34-bec8-95d38c7e1cd5",
+  licensePlate: "ABC123",
+  model: "POLO 1.6 MSI",
+  brand: "VOLKSWAGEN",
+  year: 2020,
+  jobs: [],
+  kilometers: 150000,
+  createdAt: "2024-04-15T14:32:10.000Z",
+  updatedAt: "2024-04-15T14:32:10.000Z",
+  owner: {
+    id: "c8e2f7e6-4ec0-4b56-a6fa-222f3e2551ff",
+    fullname: "Juan Pérez",
+    phone: "+5493511234567",
+    address: "Calle Falsa 123",
+    city: "Villa María",
+    email: "juan@example.com"
+  }
+};
