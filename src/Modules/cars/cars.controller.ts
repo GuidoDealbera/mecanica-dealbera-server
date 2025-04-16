@@ -7,6 +7,7 @@ import {
   Param,
   HttpStatus,
   HttpException,
+  Delete,
 } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/create-car.dto';
@@ -54,7 +55,6 @@ export class CarsController {
     name: 'licencePlate',
     required: true,
     description: 'Patente del automóvil (formato AA123BB o ABC123)',
-    example: 'ABC123',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -77,13 +77,30 @@ export class CarsController {
     type: Car,
     description: 'Automóvil actualizado correctamente',
   })
-  update(@Param('id') id: string, @Body() updateCarDto: UpdateCarDto) {
+  async update(@Param('id') id: string, @Body() updateCarDto: UpdateCarDto) {
     if (!isUUID(id)) {
       throw new HttpException(
         'El ID es del tipo incorrecto',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.carsService.update(id, updateCarDto);
+    return await this.carsService.update(id, updateCarDto);
+  }
+  
+  @Delete('delete/:licencePlate')
+  @ApiParam({
+    name: 'licencePlate',
+    description: 'Patente del automóvil a eliminar',
+    required: true
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    schema: {
+      example: 'Automóvil eliminado exitosamente'
+    },
+    description: 'Automóvil eliminado exitosamente'
+  })
+  async deleteCar(@Param('licencePlate') licence: CreateCarDto['licensePlate']) {
+    return await this.carsService.delete(licence)
   }
 }

@@ -1,10 +1,16 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { CreateCarDto } from '../cars/dto/create-car.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from 'src/Database/clients.entity';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class ClientsService {
@@ -14,14 +20,17 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto) {
     const owner = await this.findOne(createClientDto.fullname);
     if (owner) {
-      throw new HttpException('El cliente ya está registrado', HttpStatus.BAD_REQUEST)
+      throw new HttpException(
+        'El cliente ya está registrado',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    const newOwner = this.clientRepository.create(createClientDto)
-    return await this.clientRepository.save(newOwner)
+    const newOwner = this.clientRepository.create(createClientDto);
+    return await this.clientRepository.save(newOwner);
   }
 
-  findAll() {
-    return `This action returns all clients`;
+  async findAll() {
+    return await this.clientRepository.find({ relations: ['cars'] });
   }
 
   async findOne(fullname: CreateClientDto['fullname']) {
@@ -37,7 +46,30 @@ export class ClientsService {
     return `This action updates a #${id} client`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} client`;
+  async remove(id: string) {
+    if (!isUUID(id)) {
+      throw new HttpException('ID de tipo incorrecto', HttpStatus.BAD_REQUEST);
+    }
+    const clientToDelete = await this.clientRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: ['cars'],
+    });
+
+    if (!clientToDelete) {
+      throw new NotFoundException('Cliente no registrado');
+    }
+
+    if (clientToDelete.cars.length > 1) {
+      throw new HttpException(
+        'No se puede eliminar un cliente con más de un vehículo registrado',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    await this.clientRepository.remove(clientToDelete);
+
+    return { message: 'Cliente eliminado exitosamente' };
   }
 }

@@ -35,7 +35,13 @@ export class CarsService {
       owner,
     });
 
-    return await this.carsRepository.save(newCar);
+    const savedCar = await this.carsRepository.save(newCar);
+    const {owner: carOwner, ...carData} = savedCar;
+    const {cars, ...cleanOwner} = carOwner;
+    return {
+      ...carData,
+      owner: cleanOwner
+    }
   }
 
   async findAll() {
@@ -100,4 +106,32 @@ export class CarsService {
     }
     return await this.carsRepository.save(car);
   }
+
+  async delete (licence: CreateCarDto['licensePlate']) {
+    const carToDelete = await this.carsRepository.findOne({
+      where: {
+        licensePlate: licence
+      },
+      relations: ['owner']
+    })
+    
+    if(!carToDelete){
+      throw new NotFoundException('Patente no registrada')
+    }
+    
+    const owner = carToDelete.owner;
+
+    await this.carsRepository.remove(carToDelete);
+
+    const remainingCars = await this.carsRepository.find({
+      where: { owner: { id: owner.id } },
+    });
+
+    if (remainingCars.length === 0) {
+      await this.clientService.remove(owner.id);
+    }
+
+    return {message: 'Automóvil eliminado exitosamente'}
+  };
+
 }
