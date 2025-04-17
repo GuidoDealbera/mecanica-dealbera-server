@@ -25,13 +25,13 @@ export class CreateCarDto {
   })
   licensePlate: string;
 
+  @ApiProperty({enum: CarsBrands})
+  @IsEnum(CarsBrands)
+  brand: CarsBrands;
+
   @ApiProperty()
   @IsString()
   model: string;
-
-  @ApiProperty()
-  @IsEnum(CarsBrands)
-  brand: string;
 
   @ApiProperty()
   @IsInt()

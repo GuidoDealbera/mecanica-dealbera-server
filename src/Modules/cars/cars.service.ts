@@ -10,6 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Car } from 'src/Database/cars.entity';
 import { Repository } from 'typeorm';
 import { ClientsService } from '../clients/clients.service';
+import { v4 } from 'uuid';
+import { UpdateJobDto } from './dto/jobs.dto';
+import { builderResponse } from 'src/utils';
 
 @Injectable()
 export class CarsService {
@@ -30,18 +33,27 @@ export class CarsService {
       owner = await this.clientService.create(createCarDto.owner);
     }
 
+    const jobsWithTimestamps =
+      createCarDto.jobs?.map((job) => ({
+        ...job,
+        id: v4(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })) || [];
+
     const newCar = this.carsRepository.create({
       ...createCarDto,
+      jobs: jobsWithTimestamps,
       owner,
     });
 
     const savedCar = await this.carsRepository.save(newCar);
-    const {owner: carOwner, ...carData} = savedCar;
-    const {cars, ...cleanOwner} = carOwner;
+    const { owner: carOwner, ...carData } = savedCar;
+    const { cars, ...cleanOwner } = carOwner;
     return {
       ...carData,
-      owner: cleanOwner
-    }
+      owner: cleanOwner,
+    };
   }
 
   async findAll() {
@@ -78,8 +90,16 @@ export class CarsService {
     }
 
     if (owner && (owner !== car.owner || !car.owner)) {
-      const newOwner = await this.clientService.create(owner);
-      car.owner = newOwner;
+      const findOwner = await this.clientService.findOne(owner.fullname);
+      if (!findOwner) {
+        const newOwner = await this.clientService.create(owner);
+        car.owner = newOwner;
+      }
+    }
+
+    if (owner && owner.fullname === car.owner.fullname) {
+      const updatedOwner = await this.clientService.update(owner);
+      car.owner = updatedOwner;
     }
 
     if (typeof kilometers === 'number') {
@@ -95,6 +115,7 @@ export class CarsService {
     if (jobs) {
       const jobsWithTimestamps = jobs.map((job) => ({
         ...job,
+        id: v4(),
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
@@ -107,18 +128,18 @@ export class CarsService {
     return await this.carsRepository.save(car);
   }
 
-  async delete (licence: CreateCarDto['licensePlate']) {
+  async delete(licence: CreateCarDto['licensePlate']) {
     const carToDelete = await this.carsRepository.findOne({
       where: {
-        licensePlate: licence
+        licensePlate: licence,
       },
-      relations: ['owner']
-    })
-    
-    if(!carToDelete){
-      throw new NotFoundException('Patente no registrada')
+      relations: ['owner'],
+    });
+
+    if (!carToDelete) {
+      throw new NotFoundException('Patente no registrada');
     }
-    
+
     const owner = carToDelete.owner;
 
     await this.carsRepository.remove(carToDelete);
@@ -131,7 +152,54 @@ export class CarsService {
       await this.clientService.remove(owner.id);
     }
 
-    return {message: 'Automóvil eliminado exitosamente'}
-  };
+    return { message: 'Automóvil eliminado exitosamente' };
+  }
 
+  async findJobs() {
+    const cars = await this.carsRepository.find();
+    const response = cars
+      .filter((car) => Array.isArray(car.jobs) && car.jobs.length > 0)
+      .map((car) => {
+        return {
+          licencePlate: car.licensePlate,
+          jobs: car.jobs,
+        };
+      });
+    return response;
+  }
+
+  async updateJobInCar(
+    licence: CreateCarDto['licensePlate'],
+    jobId: string,
+    updateJobDto: UpdateJobDto,
+  ) {
+    const car = await this.carsRepository.findOne({
+      where: {
+        licensePlate: licence,
+      },
+    });
+    if (!car) {
+      throw new NotFoundException('Automóvil no registrado');
+    }
+    console.log('Antes de modificar: ', car);
+    if (car.jobs) {
+      const jobIndex = car.jobs.findIndex((job) => job.id === jobId);
+      console.log('Indice: ', jobIndex);
+      if (jobIndex === undefined || jobIndex === -1) {
+        throw new NotFoundException(
+          `El automóvil registrado con patente ${licence} no tiene registrado el trabajo que intenta modificar`,
+        );
+      }
+      car.jobs[jobIndex] = {
+        ...car.jobs[jobIndex],
+        ...updateJobDto,
+        updatedAt: new Date(),
+      };
+    }
+
+    const savedCar = await this.carsRepository.save(car);
+    const { owner, ...rest } = savedCar;
+    console.log('Después de modificar: ', car);
+    return builderResponse(rest, 'Trabajo actualizado exitosamente');
+  }
 }

@@ -42,8 +42,24 @@ export class ClientsService {
     return owner;
   }
 
-  update(id: number, updateClientDto: UpdateClientDto) {
-    return `This action updates a #${id} client`;
+  async update(updateClientDto: UpdateClientDto) {
+    const { fullname, address, city, email, phone } = updateClientDto;
+    const updatedClient = await this.clientRepository.findOne({
+      where: {
+        fullname,
+      },
+    });
+    if (!updatedClient) {
+      throw new NotFoundException(
+        'El cliente que intenta modificar no está registrado',
+      );
+    }
+    if (address) updatedClient.address = address;
+    if (city) updatedClient.city = city;
+    if (email) updatedClient.email = email;
+    if (phone) updatedClient.phone = phone;
+
+    return await this.clientRepository.save(updatedClient);
   }
 
   async remove(id: string) {

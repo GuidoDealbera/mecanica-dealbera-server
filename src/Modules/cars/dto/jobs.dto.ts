@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsInt, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { JobStatus } from 'src/utils';
 
 export class JobsDto {
   @ApiProperty()
@@ -14,13 +15,21 @@ export class JobsDto {
   @IsBoolean()
   isThirdParty: boolean;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsISO8601()
-  createdAt?: Date;
+  @ApiProperty({enum: JobStatus})
+  @IsEnum(JobStatus)
+  status: JobStatus
 
-  @ApiProperty({ required: false })
+}
+
+
+export class UpdateJobDto {
+  @ApiPropertyOptional({enum: JobStatus})
   @IsOptional()
-  @IsISO8601()
-  updatedAt?: Date;
+  @IsEnum(JobStatus)
+  status?: JobStatus
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  price?: number
 }

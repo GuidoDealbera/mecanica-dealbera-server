@@ -1,5 +1,5 @@
 import { IsInt, Matches, Min } from 'class-validator';
-import { CarsBrands } from 'src/utils';
+import { CarsBrands, Jobs } from 'src/utils';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -50,7 +50,7 @@ export class Car {
   year: number;
 
   @Column('jsonb', { nullable: true })
-  jobs: JobsDto[];
+  jobs: Jobs[];
 
   @IsInt({ message: 'Los kilómetros deben ser un número entero' })
   @Min(0, { message: 'Los kilómetros no pueden ser negativos' })

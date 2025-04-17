@@ -1,7 +1,16 @@
-import { Controller, Get, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+} from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { builderResponse, ResponseApi } from 'src/utils';
 
 @ApiTags('Clientes')
 @Controller('clients')
@@ -9,22 +18,43 @@ export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get('/all')
-  findAll() {
-    return this.clientsService.findAll();
+  async findAll() {
+    const allClients = await this.clientsService.findAll();
+    const response: ResponseApi = {
+      statusCode: HttpStatus.OK,
+      message: 'Listado de clientes',
+      result: allClients,
+    };
+    return response;
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clientsService.findOne(id);
+  @Get(':fullname')
+  async findOne(@Param('fullname') fullname: string) {
+    const client = await this.clientsService.findOne(fullname);
+    let response: ResponseApi;
+    if (!client) {
+      response = {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: `No existe ningún cliente llamado ${fullname}`,
+        result: null,
+      };
+    } else {
+      response = {
+        statusCode: HttpStatus.OK,
+        message: 'Cliente encontrado exitosamente',
+        result: client,
+      };
+    }
+
+    return response;
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
-    return this.clientsService.update(+id, updateClientDto);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.clientsService.remove(id);
+  @Patch()
+  async update(@Body() updateClientDto: UpdateClientDto) {
+    const updateClient = await this.clientsService.update(updateClientDto);
+    return builderResponse(
+      updateClient,
+      'Datos del cliente actualizados exitosamente',
+    );
   }
 }

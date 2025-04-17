@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { CreateClientDto } from 'src/Modules/clients/dto/create-client.dto';
 import { JobsDto } from './jobs.dto';
+import { Jobs } from 'src/utils';
 export class UpdateCarDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -19,7 +20,7 @@ export class UpdateCarDto {
   @ApiPropertyOptional({ type: [JobsDto] })
   @IsArray()
   @IsOptional()
-  jobs?: JobsDto[];
+  jobs?: Jobs[];
 
   @ApiPropertyOptional()
   @IsInt()
