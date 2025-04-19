@@ -42,6 +42,17 @@ export class ClientsService {
     return owner;
   }
 
+  async findByPhone(phone: CreateClientDto['phone']) {
+    const owner = await this.clientRepository.findOne({
+      where: {
+        phone,
+      },
+      relations: ['cars'],
+    });
+    if (!owner) return null;
+    return owner;
+  }
+
   async update(updateClientDto: UpdateClientDto) {
     const { fullname, address, city, email, phone } = updateClientDto;
     const updatedClient = await this.clientRepository.findOne({
