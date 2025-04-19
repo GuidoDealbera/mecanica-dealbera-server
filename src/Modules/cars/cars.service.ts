@@ -1,6 +1,5 @@
 import {
-  HttpException,
-  HttpStatus,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,7 +11,6 @@ import { Repository } from 'typeorm';
 import { ClientsService } from '../clients/clients.service';
 import { v4 } from 'uuid';
 import { UpdateJobDto } from './dto/jobs.dto';
-import { builderResponse } from 'src/utils';
 
 @Injectable()
 export class CarsService {
@@ -27,13 +25,13 @@ export class CarsService {
     let owner = await this.clientService.findOne(createCarDto.owner.fullname);
 
     if (car) {
-      throw new HttpException('Patente ya registrada', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Patente ya registrada');
     }
     const existingPhone = await this.clientService.findByPhone(
       createCarDto.owner.phone,
     );
     if (existingPhone) {
-      throw new HttpException('Teléfono ya registrado', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Teléfono ya registrado');
     }
     if (!owner) {
       owner = await this.clientService.create(createCarDto.owner);
@@ -63,9 +61,12 @@ export class CarsService {
   }
 
   async findAll() {
-    return await this.carsRepository.find({
+    const allCars = await this.carsRepository.find({
       relations: ['owner'],
     });
+    if (allCars.length === 0)
+      throw new NotFoundException('No hay automóviles registrados');
+    return allCars;
   }
 
   async findByLicensePlate(licensePlate: CreateCarDto['licensePlate']) {
@@ -76,7 +77,7 @@ export class CarsService {
       relations: ['owner'],
     });
     if (!car) {
-      throw new HttpException('Auto no registrado', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Auto no registrado');
     }
 
     return car;
@@ -110,9 +111,8 @@ export class CarsService {
 
     if (typeof kilometers === 'number') {
       if (kilometers < car.kilometers) {
-        throw new HttpException(
+        throw new BadRequestException(
           'No se pueden bajar los kilómetros originales al automóvil',
-          HttpStatus.BAD_REQUEST,
         );
       }
       car.kilometers = kilometers;
@@ -171,6 +171,7 @@ export class CarsService {
           jobs: car.jobs,
         };
       });
+    if (response.length === 0) return null;
     return response;
   }
 
@@ -187,10 +188,8 @@ export class CarsService {
     if (!car) {
       throw new NotFoundException('Automóvil no registrado');
     }
-    console.log('Antes de modificar: ', car);
     if (car.jobs) {
       const jobIndex = car.jobs.findIndex((job) => job.id === jobId);
-      console.log('Indice: ', jobIndex);
       if (jobIndex === undefined || jobIndex === -1) {
         throw new NotFoundException(
           `El automóvil registrado con patente ${licence} no tiene registrado el trabajo que intenta modificar`,
@@ -205,7 +204,6 @@ export class CarsService {
 
     const savedCar = await this.carsRepository.save(car);
     const { owner, ...rest } = savedCar;
-    console.log('Después de modificar: ', car);
-    return builderResponse(rest, 'Trabajo actualizado exitosamente');
+    return rest;
   }
 }

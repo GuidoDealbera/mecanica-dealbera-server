@@ -6,8 +6,9 @@ import {
   Patch,
   Param,
   HttpStatus,
-  HttpException,
   Delete,
+  SetMetadata,
+  BadRequestException,
 } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/create-car.dto';
@@ -19,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Car } from 'src/Database/cars.entity';
-import { builderResponse, example, example_job, ResponseApi } from 'src/utils';
+import { builderResponse, example, example_job, RESPONSE_MESSAGE, ResponseApi } from 'src/utils';
 import { isUUID } from 'class-validator';
 import { UpdateJobDto } from './dto/jobs.dto';
 
@@ -30,6 +31,7 @@ export class CarsController {
   constructor(private readonly carsService: CarsService) {}
 
   @Post('/register')
+  @SetMetadata(RESPONSE_MESSAGE, 'Automóvil registrado exitosamente')
   @ApiResponse({
     status: HttpStatus.CREATED,
     type: Car,
@@ -37,11 +39,11 @@ export class CarsController {
     example: example,
   })
   async create(@Body() createCarDto: CreateCarDto) {
-    const createdCar = await this.carsService.create(createCarDto);
-    return builderResponse(createdCar, 'Automóvil registrado exitosamente');
+    return await this.carsService.create(createCarDto);
   }
 
   @Get('jobs')
+  @SetMetadata(RESPONSE_MESSAGE, 'Listado de los trabajos realizados')
   @ApiResponse({
     status: HttpStatus.OK,
     schema: {
@@ -50,26 +52,11 @@ export class CarsController {
     description: 'Listado de los trabajos realizados',
   })
   async findJobs() {
-    let response: ResponseApi;
-    const result = await this.carsService.findJobs();
-    if (result.length > 0) {
-      response = {
-        statusCode: HttpStatus.OK,
-        message: 'Listado de los trabajos realizados',
-        result: result,
-      };
-    } else {
-      response = {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: 'No se encontraron trabajos realizados en ningún vehículo',
-        result: null,
-      };
-    }
-
-    return response;
+    return await this.carsService.findJobs();
   }
 
   @Get('all')
+  @SetMetadata(RESPONSE_MESSAGE, 'Listado de automóviles registrados')
   @ApiResponse({
     status: HttpStatus.OK,
     type: Car,
@@ -77,26 +64,11 @@ export class CarsController {
     example: [example],
   })
   async findAll() {
-    const allCars = await this.carsService.findAll();
-    let response: ResponseApi;
-    if (allCars.length > 0) {
-      response = {
-        statusCode: HttpStatus.OK,
-        message: 'Listado de automóviles registrados',
-        result: allCars,
-      };
-    } else {
-      response = {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: 'No hay automóviles registrados',
-        result: null,
-      };
-    }
-
-    return response;
+    return await this.carsService.findAll();
   }
 
   @Get(':licencePlate')
+  @SetMetadata(RESPONSE_MESSAGE, 'Automóvil según la patente dada')
   @ApiParam({
     name: 'licencePlate',
     required: true,
@@ -109,12 +81,8 @@ export class CarsController {
     example: example,
   })
   async findOne(@Param('licencePlate') licence: string) {
-    const foundedCar = await this.carsService.findByLicensePlate(
+    return await this.carsService.findByLicensePlate(
       licence.toUpperCase(),
-    );
-    return builderResponse(
-      foundedCar,
-      `Automóvil con patente ${licence.toUpperCase()} encontrado`,
     );
   }
 
@@ -122,7 +90,7 @@ export class CarsController {
   @ApiParam({
     name: 'id',
     required: true,
-    description: 'ID del automóvil a actualizar'
+    description: 'ID del automóvil a actualizar',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -131,9 +99,8 @@ export class CarsController {
   async update(@Param('id') id: string, @Body() updateCarDto: UpdateCarDto) {
     const { jobs, kilometers, owner } = updateCarDto;
     if (!isUUID(id)) {
-      throw new HttpException(
+      throw new BadRequestException(
         'El ID es del tipo incorrecto',
-        HttpStatus.BAD_REQUEST,
       );
     }
     const updatedCar = await this.carsService.update(id, updateCarDto);

@@ -6,6 +6,7 @@ import { DataBaseConfigModule } from './Config/Database/config.module';
 import { CarsModule } from './Modules/cars/cars.module';
 import { ClientsModule } from './Modules/clients/clients.module';
 import GlobalConfig from './Database/global-config.entity';
+import { ResponseInterceptor } from './Interceptors/response.interceptor';
 
 @Module({
   imports: [
@@ -36,6 +37,6 @@ import GlobalConfig from './Database/global-config.entity';
     ClientsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [ResponseInterceptor],
 })
 export class AppModule {}

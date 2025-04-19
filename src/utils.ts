@@ -112,3 +112,5 @@ export const builderResponse = (result: any, message: string, statusCode = HttpS
   message,
   result
 }) 
+
+export const RESPONSE_MESSAGE = 'response_message'

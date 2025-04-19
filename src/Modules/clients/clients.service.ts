@@ -1,12 +1,11 @@
 import {
-  HttpException,
-  HttpStatus,
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { CreateCarDto } from '../cars/dto/create-car.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from 'src/Database/clients.entity';
@@ -20,17 +19,19 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto) {
     const owner = await this.findOne(createClientDto.fullname);
     if (owner) {
-      throw new HttpException(
-        'El cliente ya está registrado',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('El cliente ya está registrado');
     }
     const newOwner = this.clientRepository.create(createClientDto);
     return await this.clientRepository.save(newOwner);
   }
 
   async findAll() {
-    return await this.clientRepository.find({ relations: ['cars'] });
+    const allClients = await this.clientRepository.find({
+      relations: ['cars'],
+    });
+    if (allClients.length === 0)
+      throw new NotFoundException('No hay clientes registrados');
+    return allClients;
   }
 
   async findOne(fullname: CreateClientDto['fullname']) {
@@ -39,6 +40,16 @@ export class ClientsService {
       relations: ['cars'],
     });
     if (!owner) return null;
+    return owner;
+  }
+
+  async findByName(fullname: CreateClientDto['fullname']) {
+    const owner = await this.clientRepository.findOne({
+      where: {
+        fullname,
+      },
+    });
+    if (!owner) throw new NotFoundException('Cliente no registrado');
     return owner;
   }
 
@@ -75,7 +86,7 @@ export class ClientsService {
 
   async remove(id: string) {
     if (!isUUID(id)) {
-      throw new HttpException('ID de tipo incorrecto', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('ID de tipo incorrecto');
     }
     const clientToDelete = await this.clientRepository.findOne({
       where: {
@@ -89,9 +100,8 @@ export class ClientsService {
     }
 
     if (clientToDelete.cars.length > 1) {
-      throw new HttpException(
+      throw new ConflictException(
         'No se puede eliminar un cliente con más de un vehículo registrado',
-        HttpStatus.CONFLICT,
       );
     }
 
