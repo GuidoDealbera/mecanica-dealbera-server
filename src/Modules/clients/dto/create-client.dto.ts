@@ -9,7 +9,7 @@ export class CreateClientDto {
 
   @ApiProperty()
   @IsString()
-  @IsPhoneNumber()
+  @IsPhoneNumber('AR', {message: 'Inserte un número de teléfono válido'})
   @IsNotEmpty({message: 'El número de teléfono es requerido'})
   phone: string;
 
