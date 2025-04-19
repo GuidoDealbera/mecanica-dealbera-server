@@ -20,7 +20,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Car } from 'src/Database/cars.entity';
-import { builderResponse, example, example_job, RESPONSE_MESSAGE, ResponseApi } from 'src/utils';
+import {
+  builderResponse,
+  example,
+  example_job,
+  RESPONSE_MESSAGE,
+  ResponseApi,
+} from 'src/utils';
 import { isUUID } from 'class-validator';
 import { UpdateJobDto } from './dto/jobs.dto';
 
@@ -81,12 +87,14 @@ export class CarsController {
     example: example,
   })
   async findOne(@Param('licencePlate') licence: string) {
-    return await this.carsService.findByLicensePlate(
-      licence.toUpperCase(),
-    );
+    return await this.carsService.findByLicensePlate(licence.toUpperCase());
   }
 
   @Patch('update/:id')
+  @SetMetadata(
+    RESPONSE_MESSAGE,
+    'Datos del automóvil actualizados correctamente',
+  )
   @ApiParam({
     name: 'id',
     required: true,
@@ -99,24 +107,35 @@ export class CarsController {
   async update(@Param('id') id: string, @Body() updateCarDto: UpdateCarDto) {
     const { jobs, kilometers, owner } = updateCarDto;
     if (!isUUID(id)) {
-      throw new BadRequestException(
-        'El ID es del tipo incorrecto',
-      );
+      throw new BadRequestException('El ID es del tipo incorrecto');
     }
     const updatedCar = await this.carsService.update(id, updateCarDto);
-    let message = 'Datos del automóvil actualizados correctamente';
+
     if (jobs && !kilometers && !owner) {
-      message = 'Trabajo registrado correctamente';
+      Reflect.defineMetadata(
+        RESPONSE_MESSAGE,
+        'Trabajo registrado correctamente',
+        updatedCar,
+      );
     } else if (!jobs && kilometers && !owner) {
-      message = 'Kilometraje del vehículo modificado exitosamente';
+      Reflect.defineMetadata(
+        RESPONSE_MESSAGE,
+        'Kilometraje del vehículo modificado exitosamente',
+        updatedCar,
+      );
     } else if (!jobs && !kilometers && owner) {
-      message = 'Titular del vehículo actualizado exitosamente';
+      Reflect.defineMetadata(
+        RESPONSE_MESSAGE,
+        'Titular del vehículo actualizado exitosamente',
+        updatedCar,
+      );
     }
 
-    return builderResponse(updatedCar, message);
+    return updatedCar;
   }
 
   @Delete('delete/:licencePlate')
+  @SetMetadata(RESPONSE_MESSAGE, 'Automóvil eliminado exitosamente')
   @ApiParam({
     name: 'licencePlate',
     description: 'Patente del automóvil a eliminar',

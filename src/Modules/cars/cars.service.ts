@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { Repository } from 'typeorm';
 import { ClientsService } from '../clients/clients.service';
 import { v4 } from 'uuid';
 import { UpdateJobDto } from './dto/jobs.dto';
+import { ResponseApi } from 'src/utils';
 
 @Injectable()
 export class CarsService {
@@ -134,7 +136,7 @@ export class CarsService {
     return await this.carsRepository.save(car);
   }
 
-  async delete(licence: CreateCarDto['licensePlate']) {
+  async delete(licence: CreateCarDto['licensePlate']): Promise<void> {
     const carToDelete = await this.carsRepository.findOne({
       where: {
         licensePlate: licence,
@@ -157,8 +159,7 @@ export class CarsService {
     if (remainingCars.length === 0) {
       await this.clientService.remove(owner.id);
     }
-
-    return { message: 'Automóvil eliminado exitosamente' };
+    return;
   }
 
   async findJobs() {
