@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,7 +11,6 @@ import { Repository } from 'typeorm';
 import { ClientsService } from '../clients/clients.service';
 import { v4 } from 'uuid';
 import { UpdateJobDto } from './dto/jobs.dto';
-import { ResponseApi } from 'src/utils';
 
 @Injectable()
 export class CarsService {
@@ -63,12 +61,9 @@ export class CarsService {
   }
 
   async findAll() {
-    const allCars = await this.carsRepository.find({
+    return await this.carsRepository.find({
       relations: ['owner'],
     });
-    if (allCars.length === 0)
-      throw new NotFoundException('No hay automóviles registrados');
-    return allCars;
   }
 
   async findByLicensePlate(licensePlate: CreateCarDto['licensePlate']) {
