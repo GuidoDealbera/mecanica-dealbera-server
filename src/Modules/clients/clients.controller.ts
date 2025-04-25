@@ -48,7 +48,7 @@ export class ClientsController {
     }
   })
   async findOne(@Param('fullname') fullname: string) {
-    return await this.clientsService.findByName(fullname);
+    return await this.clientsService.findOne(fullname);
   }
 
   @Patch('update')

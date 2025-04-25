@@ -26,31 +26,16 @@ export class ClientsService {
   }
 
   async findAll() {
-    const allClients = await this.clientRepository.find({
+    return await this.clientRepository.find({
       relations: ['cars'],
     });
-    if (allClients.length === 0)
-      throw new NotFoundException('No hay clientes registrados');
-    return allClients;
   }
 
   async findOne(fullname: CreateClientDto['fullname']) {
-    const owner = await this.clientRepository.findOne({
+    return await this.clientRepository.findOne({
       where: { fullname },
       relations: ['cars'],
     });
-    if (!owner) return null;
-    return owner;
-  }
-
-  async findByName(fullname: CreateClientDto['fullname']) {
-    const owner = await this.clientRepository.findOne({
-      where: {
-        fullname,
-      },
-    });
-    if (!owner) throw new NotFoundException('Cliente no registrado');
-    return owner;
   }
 
   async findByPhone(phone: CreateClientDto['phone']) {
