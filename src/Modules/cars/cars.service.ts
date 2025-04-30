@@ -27,13 +27,14 @@ export class CarsService {
     if (car) {
       throw new BadRequestException('Patente ya registrada');
     }
-    const existingPhone = await this.clientService.findByPhone(
-      createCarDto.owner.phone,
-    );
-    if (existingPhone) {
-      throw new BadRequestException('Teléfono ya registrado');
-    }
+
     if (!owner) {
+      const existingPhone = await this.clientService.findByPhone(
+        createCarDto.owner.phone,
+      );
+      if (existingPhone) {
+        throw new BadRequestException('Teléfono ya registrado');
+      }
       owner = await this.clientService.create(createCarDto.owner);
     }
 
