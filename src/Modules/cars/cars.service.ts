@@ -201,6 +201,8 @@ export class CarsService {
 
     const savedCar = await this.carsRepository.save(car);
     const { owner, ...rest } = savedCar;
-    return rest;
+    const {jobs} = rest;
+    const updatedJob = jobs.find(job => job.id === jobId);
+    return updatedJob;
   }
 }
