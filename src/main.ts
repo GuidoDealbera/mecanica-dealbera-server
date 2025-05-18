@@ -37,7 +37,7 @@ async function bootstrap() {
   app.use(morgan('dev'));
   app.enableCors({
     origin: '*',
-    methods: 'GET,PUT,POST,DELETE',
+    methods: 'GET,PUT,POST,DELETE,PATCH',
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
